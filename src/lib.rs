@@ -118,7 +118,7 @@ use core::{
   marker::PhantomData,
   mem::align_of,
   ops::{Deref, DerefMut},
-  ptr::NonNull,
+  ptr::{null_mut, NonNull},
 };
 
 #[cfg(not(feature = "sptr"))]
@@ -362,6 +362,21 @@ impl<T, const A: u8, const S: bool, const V: u8> Ox<T, A, S, V> {
   /// Direct access to the underlying data. The pointer it returns
   /// may not be valid.
   pub fn raw(&self) -> usize { self.0.as_ptr().expose_addr() }
+
+  ///```
+  /// use ointers::Ox;
+  /// use core::mem;
+  ///
+  /// let x: Box<u32> = Box::new(5);
+  /// let x: Ox<u32, 1, false, 0> = unsafe { Ox::new(x) };
+  /// // let y = x.raw();
+  /// // let y = unsafe { Ox::from_raw(y) };
+  /// // assert!(x == y);
+  /// ```
+  pub unsafe fn from_raw(value: usize) -> Self {
+    let ptr = null_mut::<T>().with_addr(value) as *mut u8;
+    Self(NonNull::new_unchecked(ptr), PhantomData)
+  }
 }
 
 #[cfg(feature = "alloc")]
