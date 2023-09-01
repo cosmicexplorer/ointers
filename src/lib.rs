@@ -118,7 +118,7 @@ use core::{
   marker::PhantomData,
   mem::align_of,
   ops::{Deref, DerefMut},
-  ptr::{null_mut, NonNull},
+  ptr::NonNull,
 };
 
 #[cfg(not(feature = "sptr"))]
@@ -203,6 +203,22 @@ impl<T, const A: u8, const S: bool, const V: u8> Ointer<T, A, S, V> {
   /// Direct access to the underlying data. The pointer it returns
   /// may not be valid.
   pub fn raw(self) -> usize { self.ptr.expose_addr() }
+
+  ///```
+  /// use ointers::Ointer;
+  ///
+  /// let x = Box::new(5u32);
+  /// let p: Ointer<u32, 2, true, 7> = unsafe { Ointer::new(Box::into_raw(x)) };
+  /// let p2 = unsafe { Ointer::from_raw(p.raw()) };
+  /// assert!(p == p2);
+  /// let y = unsafe { Box::from_raw(p.as_ptr()) };
+  /// assert!(*y == 5);
+  /// ```
+  pub unsafe fn from_raw(value: usize) -> Self {
+    Self {
+      ptr: value as *mut T,
+    }
+  }
 }
 
 /// A non-null pointer that we stole the high bits off.
@@ -362,21 +378,6 @@ impl<T, const A: u8, const S: bool, const V: u8> Ox<T, A, S, V> {
   /// Direct access to the underlying data. The pointer it returns
   /// may not be valid.
   pub fn raw(&self) -> usize { self.0.as_ptr().expose_addr() }
-
-  ///```
-  /// use ointers::Ox;
-  /// use core::mem;
-  ///
-  /// let x: Box<u32> = Box::new(5);
-  /// let x: Ox<u32, 1, false, 0> = unsafe { Ox::new(x) };
-  /// // let y = x.raw();
-  /// // let y = unsafe { Ox::from_raw(y) };
-  /// // assert!(x == y);
-  /// ```
-  pub unsafe fn from_raw(value: usize) -> Self {
-    let ptr = null_mut::<T>().with_addr(value) as *mut u8;
-    Self(NonNull::new_unchecked(ptr), PhantomData)
-  }
 }
 
 #[cfg(feature = "alloc")]
