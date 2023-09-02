@@ -189,6 +189,18 @@ impl<T, const A: u8, const S: bool, const V: u8> Ointer<T, A, S, V> {
 
   /// Takes a value from the high bits of the provided usize and
   /// steals them from the ointer.
+  ///
+  ///```
+  /// use ointers::Ointer;
+  ///
+  /// let x = Box::into_raw(Box::new(5u32));
+  /// let o: Ointer<u32, 2, true, 7> = unsafe { Ointer::new(x) };
+  /// assert_eq!(5, unsafe { o.as_ptr().read() });
+  /// let p = o.steal(1);
+  /// assert_eq!(p.as_ptr(), x);
+  /// assert_eq!(5, unsafe { p.as_ptr().read() });
+  /// assert_eq!(1, p.stolen());
+  ///```
   pub fn steal(self, bits: usize) -> Self {
     let mask = asv_mask(A, S, V);
     let ptr = self
